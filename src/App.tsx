@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import {
   batchRows,
@@ -19,11 +19,51 @@ import {
   urlMatches,
 } from './data'
 
+type BatchRow = (typeof batchRows)[number]
+
+type DemoSettings = {
+  projectName: string
+  domain: string
+  llmProvider: string
+  model: string
+  embeddingsModel: string
+  openaiKey: string
+  cerebrasKey: string
+  storageMode: string
+  storagePath: string
+  notes: string
+}
+
+const SETTINGS_KEY = 'llm-pipeline-demo-settings'
+const BATCHES_KEY = 'llm-pipeline-demo-batches'
+
+const defaultSettings: DemoSettings = {
+  projectName: 'Running Shoes Demand Graph',
+  domain: 'demo.running-shoes.local',
+  llmProvider: 'OpenAI',
+  model: 'gpt-5.4-mini',
+  embeddingsModel: 'text-embedding-3-large',
+  openaiKey: '',
+  cerebrasKey: '',
+  storageMode: 'Browser localStorage',
+  storagePath: 'window.localStorage -> llm-pipeline-demo-*',
+  notes:
+    'Для демо ключи и настройки сохраняются только в localStorage браузера. Для реального проекта нужен backend vault.',
+}
+
 function App() {
   const [activeScreen, setActiveScreen] = useState('dashboard')
   const [selectedClusterId, setSelectedClusterId] = useState(clusterRows[0].id)
   const [selectedNodeId, setSelectedNodeId] = useState(siteNodes[0].id)
   const [selectedPromptId, setSelectedPromptId] = useState(promptRows[0].id)
+  const [settings, setSettings] = useState<DemoSettings>(defaultSettings)
+  const [savedAt, setSavedAt] = useState('not saved yet')
+  const [batches, setBatches] = useState<BatchRow[]>(batchRows)
+  const [uploadName, setUploadName] = useState('spring-running-shoes-01.csv')
+  const [uploadSource, setUploadSource] = useState('csv import')
+  const [uploadOwner, setUploadOwner] = useState('Nina')
+  const [uploadCount, setUploadCount] = useState('842')
+  const [isRunning, setIsRunning] = useState(false)
 
   const selectedCluster =
     clusterRows.find((cluster) => cluster.id === selectedClusterId) ?? clusterRows[0]
@@ -35,6 +75,109 @@ function App() {
     () => navItems.find((item) => item.id === activeScreen) ?? navItems[0],
     [activeScreen],
   )
+
+  useEffect(() => {
+    const storedSettings = window.localStorage.getItem(SETTINGS_KEY)
+    const storedBatches = window.localStorage.getItem(BATCHES_KEY)
+
+    if (storedSettings) {
+      setSettings({ ...defaultSettings, ...JSON.parse(storedSettings) })
+      setSavedAt('restored from browser storage')
+    }
+
+    if (storedBatches) {
+      setBatches(JSON.parse(storedBatches))
+    }
+  }, [])
+
+  useEffect(() => {
+    window.localStorage.setItem(BATCHES_KEY, JSON.stringify(batches))
+  }, [batches])
+
+  useEffect(() => {
+    if (!isRunning) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      setBatches((current) =>
+        current.map((batch, index) => {
+          if (index !== 0) {
+            return batch
+          }
+
+          const progress = Math.min(Number.parseInt(batch.progress, 10) + 12, 100)
+          return {
+            ...batch,
+            progress: `${progress}%`,
+            status: progress >= 100 ? 'processed' : 'processing',
+            tone: progress >= 100 ? 'success' : 'warning',
+          }
+        }),
+      )
+    }, 900)
+
+    return () => window.clearInterval(interval)
+  }, [isRunning])
+
+  useEffect(() => {
+    if (batches[0]?.progress === '100%' && isRunning) {
+      setIsRunning(false)
+    }
+  }, [batches, isRunning])
+
+  const activeBatch = batches[0] ?? batchRows[0]
+  const effectiveOverview = [
+    {
+      ...overviewStats[0],
+      value: activeBatch.batch,
+      note: `${activeBatch.queries} queries / owner ${activeBatch.owner} / source ${activeBatch.source}`,
+    },
+    overviewStats[1],
+    overviewStats[2],
+  ]
+
+  const handleSaveSettings = () => {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+    setSavedAt(new Date().toLocaleString('ru-RU'))
+  }
+
+  const buildDraftBatch = (): BatchRow => ({
+      batch: uploadName.replace(/\.[^.]+$/, '') || 'new-demo-batch',
+      source: uploadSource,
+      queries: uploadCount || '0',
+      progress: '0%',
+      status: 'draft',
+      tone: 'neutral',
+      owner: uploadOwner || 'Unassigned',
+      createdAt: new Date().toLocaleString('sv-SE').replace('T', ' '),
+    })
+
+  const handleUploadBatch = () => {
+    const newBatch = buildDraftBatch()
+    setBatches((current) => [newBatch, ...current])
+    setActiveScreen('imports')
+  }
+
+  const handleRunPipeline = () => {
+    setBatches((current) =>
+      current.map((batch, index) =>
+        index === 0 ? { ...batch, progress: '4%', status: 'processing', tone: 'warning' } : batch,
+      ),
+    )
+    setIsRunning(true)
+    setActiveScreen('dashboard')
+  }
+
+  const handleSaveAndRun = () => {
+    const newBatch = buildDraftBatch()
+    setBatches((current) => [
+      { ...newBatch, progress: '4%', status: 'processing', tone: 'warning' },
+      ...current,
+    ])
+    setIsRunning(true)
+    setActiveScreen('dashboard')
+  }
 
   return (
     <div className="app-shell">
@@ -64,8 +207,10 @@ function App() {
 
         <div className="sidebar-card">
           <span>Active Batch</span>
-          <strong>spring-running-shoes-01</strong>
-          <p>842 queries from GSC, suggest parser and competitor URLs.</p>
+          <strong>{activeBatch.batch}</strong>
+          <p>
+            {activeBatch.queries} queries, {activeBatch.source}, {activeBatch.progress} complete
+          </p>
         </div>
       </aside>
 
@@ -77,12 +222,18 @@ function App() {
             <p>{screenTitle.description}</p>
           </div>
           <div className="header-actions">
-            <span className="chip neutral">LLM: GPT-5.4-mini</span>
-            <span className="chip success">SLA 99.2%</span>
-            <button type="button" className="secondary-action">
-              Dry run
+            <span className="chip neutral">LLM: {settings.model}</span>
+            <span className={isRunning ? 'chip warning' : 'chip success'}>
+              {isRunning ? 'pipeline running' : 'ready'}
+            </span>
+            <button
+              type="button"
+              className="secondary-action"
+              onClick={() => setActiveScreen('settings')}
+            >
+              Settings
             </button>
-            <button type="button" className="primary-action">
+            <button type="button" className="primary-action" onClick={handleRunPipeline}>
               Run pipeline
             </button>
           </div>
@@ -110,7 +261,7 @@ function App() {
         {activeScreen === 'dashboard' && (
           <section className="screen-grid">
             <div className="overview-strip full-span">
-              {overviewStats.map((item) => (
+              {effectiveOverview.map((item) => (
                 <article key={item.label} className="overview-card">
                   <span>{item.label}</span>
                   <strong>{item.value}</strong>
@@ -143,7 +294,7 @@ function App() {
                   <p className="eyebrow">Funnel</p>
                   <h3>Pipeline health</h3>
                 </div>
-                <span className="chip neutral">Batch updated 8 min ago</span>
+                <span className="chip neutral">batch progress {activeBatch.progress}</span>
               </div>
               <div className="funnel-list">
                 {funnelStages.map((item) => (
@@ -223,8 +374,8 @@ function App() {
                   <span>Status</span>
                   <span>Owner</span>
                 </div>
-                {batchRows.map((row) => (
-                  <div key={row.batch} className="grid-line six">
+                {batches.map((row) => (
+                  <div key={`${row.batch}-${row.createdAt}`} className="grid-line six">
                     <span>{row.batch}</span>
                     <span>{row.source}</span>
                     <span>{row.queries}</span>
@@ -256,8 +407,8 @@ function App() {
                   <span>Status</span>
                   <span>Owner</span>
                 </div>
-                {batchRows.map((row) => (
-                  <div key={row.batch} className="grid-line six">
+                {batches.map((row) => (
+                  <div key={`${row.batch}-${row.createdAt}`} className="grid-line six">
                     <span>{row.batch}</span>
                     <span>{row.source}</span>
                     <span>{row.queries}</span>
@@ -272,27 +423,193 @@ function App() {
             <div className="panel">
               <div className="panel-head">
                 <div>
-                  <p className="eyebrow">Drawer</p>
-                  <h3>Upload preview</h3>
+                  <p className="eyebrow">Upload Drawer</p>
+                  <h3>New import batch</h3>
                 </div>
               </div>
+              <div className="form-grid">
+                <label className="field">
+                  <span>File / batch name</span>
+                  <input value={uploadName} onChange={(e) => setUploadName(e.target.value)} />
+                </label>
+                <label className="field">
+                  <span>Source</span>
+                  <select value={uploadSource} onChange={(e) => setUploadSource(e.target.value)}>
+                    <option>csv import</option>
+                    <option>gsc</option>
+                    <option>url parser</option>
+                    <option>manual</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Owner</span>
+                  <input value={uploadOwner} onChange={(e) => setUploadOwner(e.target.value)} />
+                </label>
+                <label className="field">
+                  <span>Expected queries</span>
+                  <input value={uploadCount} onChange={(e) => setUploadCount(e.target.value)} />
+                </label>
+                <label className="field full">
+                  <span>Demo file input</span>
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setUploadName(file.name)
+                      }
+                    }}
+                  />
+                </label>
+              </div>
               <div className="detail-card">
-                <strong>spring-running-shoes-01.csv</strong>
-                <p>CSV columns mapped to `query_text`, `source`, `frequency`, `region` and `source_url`.</p>
-                <div className="mini-stack">
-                  <div className="mini-box">
-                    <span>Rows preview</span>
-                    <p>842 / 842 valid</p>
-                  </div>
-                  <div className="mini-box">
-                    <span>Dry run</span>
-                    <p>18 risky rows detected before parse</p>
-                  </div>
-                  <div className="mini-box">
-                    <span>API cost</span>
-                    <p>$7.80 estimated with GPT-5.4-mini</p>
-                  </div>
+                <strong>Where demo data is stored</strong>
+                <p>
+                  Upload metadata and batch queue сохраняются в browser `localStorage`.
+                  Сам файл не отправляется на сервер и не парсится по-настоящему.
+                </p>
+              </div>
+              <div className="toolbar">
+                <button type="button" className="secondary-action" onClick={handleUploadBatch}>
+                  Save batch draft
+                </button>
+                <button type="button" className="primary-action" onClick={handleSaveAndRun}>
+                  Save and run
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeScreen === 'settings' && (
+          <section className="two-column-screen">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Settings</p>
+                  <h3>Project and storage config</h3>
                 </div>
+                <span className="chip neutral">saved: {savedAt}</span>
+              </div>
+              <div className="form-grid">
+                <label className="field">
+                  <span>Project name</span>
+                  <input
+                    value={settings.projectName}
+                    onChange={(e) => setSettings((current) => ({ ...current, projectName: e.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Domain</span>
+                  <input
+                    value={settings.domain}
+                    onChange={(e) => setSettings((current) => ({ ...current, domain: e.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Provider</span>
+                  <select
+                    value={settings.llmProvider}
+                    onChange={(e) => setSettings((current) => ({ ...current, llmProvider: e.target.value }))}
+                  >
+                    <option>OpenAI</option>
+                    <option>Cerebras</option>
+                    <option>Hybrid</option>
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Model</span>
+                  <input
+                    value={settings.model}
+                    onChange={(e) => setSettings((current) => ({ ...current, model: e.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Embeddings model</span>
+                  <input
+                    value={settings.embeddingsModel}
+                    onChange={(e) => setSettings((current) => ({ ...current, embeddingsModel: e.target.value }))}
+                  />
+                </label>
+                <label className="field">
+                  <span>Storage mode</span>
+                  <input
+                    value={settings.storageMode}
+                    onChange={(e) => setSettings((current) => ({ ...current, storageMode: e.target.value }))}
+                  />
+                </label>
+                <label className="field full">
+                  <span>Storage path</span>
+                  <input
+                    value={settings.storagePath}
+                    onChange={(e) => setSettings((current) => ({ ...current, storagePath: e.target.value }))}
+                  />
+                </label>
+                <label className="field full">
+                  <span>Notes</span>
+                  <textarea
+                    rows={4}
+                    value={settings.notes}
+                    onChange={(e) => setSettings((current) => ({ ...current, notes: e.target.value }))}
+                  />
+                </label>
+              </div>
+              <div className="toolbar">
+                <button type="button" className="primary-action" onClick={handleSaveSettings}>
+                  Save config
+                </button>
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">API Keys</p>
+                  <h3>Demo credential input</h3>
+                </div>
+              </div>
+              <div className="form-grid">
+                <label className="field full">
+                  <span>OpenAI API key</span>
+                  <input
+                    type="password"
+                    placeholder="sk-..."
+                    value={settings.openaiKey}
+                    onChange={(e) => setSettings((current) => ({ ...current, openaiKey: e.target.value }))}
+                  />
+                </label>
+                <label className="field full">
+                  <span>Cerebras API key</span>
+                  <input
+                    type="password"
+                    placeholder="csk-..."
+                    value={settings.cerebrasKey}
+                    onChange={(e) => setSettings((current) => ({ ...current, cerebrasKey: e.target.value }))}
+                  />
+                </label>
+              </div>
+              <div className="detail-card">
+                <strong>Where keys are saved in demo</strong>
+                <p>
+                  Ключи сохраняются только локально в `localStorage` этого браузера.
+                  В demo нет backend, database или secret vault. Это имитация рабочей
+                  панели настройки, а не безопасное production-хранилище.
+                </p>
+              </div>
+              <div className="detail-grid">
+                <div className="mini-box">
+                  <span>Current provider</span>
+                  <p>{settings.llmProvider}</p>
+                </div>
+                <div className="mini-box">
+                  <span>Current storage</span>
+                  <p>{settings.storageMode}</p>
+                </div>
+              </div>
+              <div className="toolbar">
+                <button type="button" className="primary-action" onClick={handleSaveSettings}>
+                  Save API config
+                </button>
               </div>
             </div>
           </section>

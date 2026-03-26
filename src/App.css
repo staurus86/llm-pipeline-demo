@@ -236,7 +236,9 @@
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: linear-gradient(180deg, #f8fbff, #eef4fb);
+  background:
+    linear-gradient(135deg, rgba(29, 78, 216, 0.05), transparent 52%),
+    linear-gradient(180deg, #f8fbff, #eef4fb);
 }
 
 .overview-card span {
@@ -385,6 +387,50 @@
   gap: 0.75rem;
 }
 
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field span {
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: rgba(29, 78, 216, 0.4);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.08);
+  background: #fff;
+}
+
 .mini-box {
   padding: 0.8rem;
   border: 1px solid var(--border);
@@ -437,6 +483,19 @@
 
 .panel {
   background: rgba(248, 250, 252, 0.96);
+  position: relative;
+  overflow: hidden;
+}
+
+.panel::after {
+  content: '';
+  position: absolute;
+  inset: auto -2rem -2rem auto;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(29, 78, 216, 0.08), transparent 68%);
+  pointer-events: none;
 }
 
 .metric-card:first-child,
@@ -552,6 +611,15 @@
   border-color: var(--line-strong);
 }
 
+.cluster-row strong,
+.prompt-row strong,
+.tree-node strong,
+.overview-card strong,
+.metric-card strong,
+.panel h3 {
+  letter-spacing: -0.03em;
+}
+
 @media (max-width: 1280px) {
   .pipeline-strip {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -563,7 +631,8 @@
   .two-column-screen,
   .screen-grid,
   .metric-grid,
-  .overview-strip {
+  .overview-strip,
+  .form-grid {
     grid-template-columns: 1fr;
   }
 

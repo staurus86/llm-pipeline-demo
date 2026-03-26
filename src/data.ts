@@ -7,8 +7,9 @@ export const navItems = [
   { id: 'structure', short: '06', label: 'Site Structure', description: 'Как кластеры становятся деревом URL и страниц.' },
   { id: 'matcher', short: '07', label: 'URL Matcher', description: 'Сопоставление кластеров с текущим каталогом URL.' },
   { id: 'prompts', short: '08', label: 'Prompts / LLM Studio', description: 'Версии промтов, модели, schema и pass rate.' },
-  { id: 'review', short: '09', label: 'Review Queue', description: 'Human-in-the-loop для спорных или рискованных кейсов.' },
-  { id: 'briefs', short: '10', label: 'Content Briefs', description: 'Финальные brief-артефакты для редакции и SEO-команды.' },
+  { id: 'settings', short: '09', label: 'Settings / Keys', description: 'Demo-настройки проекта, API keys и место хранения конфигурации.' },
+  { id: 'review', short: '10', label: 'Review Queue', description: 'Human-in-the-loop для спорных или рискованных кейсов.' },
+  { id: 'briefs', short: '11', label: 'Content Briefs', description: 'Финальные brief-артефакты для редакции и SEO-команды.' },
 ]
 
 export const pipelineSummary = [
