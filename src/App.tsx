@@ -7,6 +7,7 @@ import {
   dashboardMetrics,
   funnelStages,
   navItems,
+  overviewStats,
   pageTypeRows,
   parseRows,
   pipelineSummary,
@@ -76,6 +77,8 @@ function App() {
             <p>{screenTitle.description}</p>
           </div>
           <div className="header-actions">
+            <span className="chip neutral">LLM: GPT-5.4-mini</span>
+            <span className="chip success">SLA 99.2%</span>
             <button type="button" className="secondary-action">
               Dry run
             </button>
@@ -87,7 +90,7 @@ function App() {
 
         <section className="pipeline-strip" aria-label="Pipeline summary">
           {pipelineSummary.map((stage) => (
-            <article key={stage.title} className="pipeline-card">
+            <article key={stage.title} className={`pipeline-card ${stage.state}`}>
               <div className="pipeline-top">
                 <span>{stage.title}</span>
                 <strong>{stage.count}</strong>
@@ -97,18 +100,39 @@ function App() {
                 <p>{stage.confidence} avg confidence</p>
                 <p>{stage.errors} errors</p>
               </div>
+              <div className="pipeline-progress">
+                <div className="pipeline-progress-fill" style={{ width: stage.width }} />
+              </div>
             </article>
           ))}
         </section>
 
         {activeScreen === 'dashboard' && (
           <section className="screen-grid">
+            <div className="overview-strip full-span">
+              {overviewStats.map((item) => (
+                <article key={item.label} className="overview-card">
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                  <p>{item.note}</p>
+                </article>
+              ))}
+            </div>
+
             <div className="metric-grid">
               {dashboardMetrics.map((metric) => (
-                <article key={metric.label} className="metric-card">
-                  <span>{metric.label}</span>
+                <article key={metric.label} className={`metric-card ${metric.tone}`}>
+                  <div className="metric-head">
+                    <span>{metric.label}</span>
+                    <em className={`metric-delta ${metric.tone}`}>{metric.delta}</em>
+                  </div>
                   <strong>{metric.value}</strong>
                   <p>{metric.note}</p>
+                  <div className="sparkline" aria-hidden="true">
+                    {metric.trend.map((value, index) => (
+                      <i key={`${metric.label}-${index}`} style={{ height: `${value}%` }} />
+                    ))}
+                  </div>
                 </article>
               ))}
             </div>

@@ -1,19 +1,27 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg: #f4f6f8;
-  --panel: #eef2f6;
-  --card: #fbfcfd;
+  --bg: #edf1f5;
+  --panel: #111827;
+  --panel-2: #172133;
+  --card: #f8fafc;
   --surface: #ffffff;
-  --soft: #f2f5f8;
-  --selected: #edf4ff;
-  --ink: #162033;
-  --muted: #657288;
-  --accent: #224c8f;
-  --accent-soft: #53a36c;
-  --line-strong: rgba(22, 32, 51, 0.22);
-  --border: rgba(22, 32, 51, 0.11);
-  font-family: 'Manrope', sans-serif;
+  --soft: #f1f5f9;
+  --soft-2: #e6edf5;
+  --selected: #e8f0fe;
+  --ink: #0f172a;
+  --muted: #5f6f85;
+  --accent: #1d4ed8;
+  --accent-soft: #0f9d58;
+  --line-strong: rgba(15, 23, 42, 0.18);
+  --border: rgba(15, 23, 42, 0.08);
+  --border-dark: rgba(255, 255, 255, 0.1);
+  --sidebar-text: #d6deea;
+  --sidebar-muted: #93a1b5;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  font-family: 'Inter', sans-serif;
   line-height: 1.45;
   font-weight: 500;
   color: var(--ink);
@@ -32,9 +40,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(34, 76, 143, 0.06), transparent 22%),
-    linear-gradient(180deg, #f8fafc 0%, #f4f6f8 100%);
+  background: var(--bg);
 }
 
 button,
@@ -53,18 +59,21 @@ strong {
 }
 
 h1 {
-  font-size: 1.5rem;
-  line-height: 1.1;
+  font-size: 1.55rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 h2 {
-  font-size: 1.7rem;
-  line-height: 1.1;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
 }
 
 h3 {
   font-size: 1rem;
   line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 p {

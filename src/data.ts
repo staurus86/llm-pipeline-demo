@@ -12,25 +12,31 @@ export const navItems = [
 ]
 
 export const pipelineSummary = [
-  { title: 'Import', count: '842', rate: '100%', confidence: 'n/a', errors: '0' },
-  { title: 'Normalize', count: '814', rate: '96%', confidence: '0.93', errors: '28' },
-  { title: 'Parse', count: '792', rate: '97%', confidence: '0.89', errors: '12' },
-  { title: 'Classify', count: '792', rate: '95%', confidence: '0.87', errors: '17' },
-  { title: 'Cluster', count: '126', rate: '91%', confidence: '0.84', errors: '9' },
-  { title: 'Type Page', count: '118', rate: '89%', confidence: '0.82', errors: '11' },
-  { title: 'Match URL', count: '118', rate: '78%', confidence: '0.79', errors: '26' },
-  { title: 'Review', count: '34', rate: '73%', confidence: '0.68', errors: '34' },
+  { title: 'Import', count: '842', rate: '100%', confidence: 'n/a', errors: '0', width: '100%', state: 'stable' },
+  { title: 'Normalize', count: '814', rate: '96%', confidence: '0.93', errors: '28', width: '96%', state: 'stable' },
+  { title: 'Parse', count: '792', rate: '97%', confidence: '0.89', errors: '12', width: '97%', state: 'stable' },
+  { title: 'Classify', count: '792', rate: '95%', confidence: '0.87', errors: '17', width: '95%', state: 'stable' },
+  { title: 'Cluster', count: '126', rate: '91%', confidence: '0.84', errors: '9', width: '91%', state: 'focus' },
+  { title: 'Type Page', count: '118', rate: '89%', confidence: '0.82', errors: '11', width: '89%', state: 'focus' },
+  { title: 'Match URL', count: '118', rate: '78%', confidence: '0.79', errors: '26', width: '78%', state: 'risk' },
+  { title: 'Review', count: '34', rate: '73%', confidence: '0.68', errors: '34', width: '73%', state: 'risk' },
 ]
 
 export const dashboardMetrics = [
-  { label: 'Total Queries', value: '842', note: 'Одна ниша: беговые кроссовки, бренды, фильтры, geo и comparison.' },
-  { label: 'Normalized', value: '814', note: 'После rule-based чистки и LLM normalization.' },
-  { label: 'Need Review', value: '34', note: 'Низкий confidence, конфликтный page type или URL overlap.' },
-  { label: 'Existing URL Matches', value: '67', note: 'Система не плодит новые страницы без необходимости.' },
-  { label: 'New Pages Suggested', value: '51', note: 'Новые category, brand, guide, geo и comparison pages.' },
-  { label: 'Conflict Rate', value: '9.4%', note: 'Пересечение кластеров, slug conflicts и mixed intent.' },
-  { label: 'LLM Cost Estimate', value: '$7.80', note: 'Оценка пакета при structured output и partial retries.' },
-  { label: 'Avg Confidence', value: '0.86', note: 'Средний confidence по parse + classify + page typing.' },
+  { label: 'Total Queries', value: '842', delta: '+12%', tone: 'stable', note: 'Одна ниша: беговые кроссовки, бренды, фильтры, geo и comparison.', trend: [38, 42, 48, 56, 61, 67, 71] },
+  { label: 'Normalized', value: '814', delta: '+96%', tone: 'stable', note: 'После rule-based чистки и LLM normalization.', trend: [22, 36, 45, 59, 66, 74, 81] },
+  { label: 'Need Review', value: '34', delta: '-8%', tone: 'risk', note: 'Низкий confidence, конфликтный page type или URL overlap.', trend: [48, 44, 43, 39, 38, 35, 34] },
+  { label: 'Existing URL Matches', value: '67', delta: '+5%', tone: 'focus', note: 'Система не плодит новые страницы без необходимости.', trend: [18, 27, 35, 42, 48, 56, 67] },
+  { label: 'New Pages Suggested', value: '51', delta: '+9%', tone: 'focus', note: 'Новые category, brand, guide, geo и comparison pages.', trend: [10, 16, 24, 31, 37, 44, 51] },
+  { label: 'Conflict Rate', value: '9.4%', delta: '-1.8%', tone: 'risk', note: 'Пересечение кластеров, slug conflicts и mixed intent.', trend: [18, 17, 16, 14, 12, 10, 9] },
+  { label: 'LLM Cost Estimate', value: '$7.80', delta: '-14%', tone: 'stable', note: 'Оценка пакета при structured output и partial retries.', trend: [16, 15, 14, 13, 11, 9, 8] },
+  { label: 'Avg Confidence', value: '0.86', delta: '+0.04', tone: 'stable', note: 'Средний confidence по parse + classify + page typing.', trend: [58, 61, 64, 70, 74, 81, 86] },
+]
+
+export const overviewStats = [
+  { label: 'Active Batch', value: 'spring-running-shoes-01', note: '842 queries / owner Nina / region RU+Moscow' },
+  { label: 'Primary Risk', value: 'URL overlap', note: '26 unresolved matcher cases need analyst action' },
+  { label: 'Throughput', value: '14.2k q/hr', note: 'Based on current batch + queued imports' },
 ]
 
 export const funnelStages = [
