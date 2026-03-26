@@ -64,6 +64,7 @@ function App() {
   const [uploadOwner, setUploadOwner] = useState('Nina')
   const [uploadCount, setUploadCount] = useState('842')
   const [isRunning, setIsRunning] = useState(false)
+  const [searchValue, setSearchValue] = useState('')
 
   const selectedCluster =
     clusterRows.find((cluster) => cluster.id === selectedClusterId) ?? clusterRows[0]
@@ -212,9 +213,31 @@ function App() {
             {activeBatch.queries} queries, {activeBatch.source}, {activeBatch.progress} complete
           </p>
         </div>
+
+        <div className="sidebar-card sidebar-card-muted">
+          <span>Workspace</span>
+          <strong>{settings.projectName}</strong>
+          <p>{settings.domain}</p>
+        </div>
       </aside>
 
       <main className="workspace">
+        <div className="utility-bar">
+          <label className="search-shell">
+            <span>Search</span>
+            <input
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              placeholder="Search clusters, URLs, prompts"
+            />
+          </label>
+          <div className="utility-actions">
+            <span className="chip neutral">Review {reviewRows.length}</span>
+            <span className="chip neutral">Batches {batches.length}</span>
+            <span className="chip success">Storage local</span>
+          </div>
+        </div>
+
         <header className="workspace-header">
           <div>
             <p className="eyebrow">Pipeline</p>

@@ -33,6 +33,10 @@
   border-radius: var(--radius-lg);
 }
 
+.sidebar-card-muted {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+}
+
 .brand-block,
 .sidebar-card {
   border-color: var(--border-dark);
@@ -124,6 +128,51 @@
   flex-direction: column;
   gap: 1.25rem;
   padding: 1.5rem;
+}
+
+.utility-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0.25rem;
+}
+
+.utility-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.search-shell {
+  display: grid;
+  gap: 0.3rem;
+  min-width: min(28rem, 100%);
+}
+
+.search-shell span {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.search-shell input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--ink);
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.search-shell input:focus {
+  border-color: rgba(29, 78, 216, 0.36);
+  box-shadow:
+    0 0 0 3px rgba(29, 78, 216, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .workspace-header {
@@ -503,6 +552,16 @@
   background: linear-gradient(180deg, #ffffff, #f3f8ff);
 }
 
+.metric-card,
+.overview-card,
+.pipeline-card,
+.panel,
+.grid-table,
+.detail-card,
+.mini-box {
+  backdrop-filter: blur(8px);
+}
+
 .metric-head {
   display: flex;
   align-items: center;
@@ -639,6 +698,11 @@
   .sidebar {
     position: static;
     height: auto;
+  }
+
+  .utility-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .pipeline-strip {
