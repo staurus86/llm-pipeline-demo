@@ -1,25 +1,23 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg: #f3eadf;
-  --panel: #fffaf2;
-  --paper: #f8efdf;
-  --ink: #101722;
-  --muted: #5c6470;
-  --accent: #c16939;
-  --border: rgba(16, 23, 34, 0.12);
-  --border-strong: rgba(16, 23, 34, 0.24);
-  --shadow: 0 20px 60px rgba(56, 42, 28, 0.12);
-  --font-body: 'Manrope', sans-serif;
-  --font-display: 'Fraunces', serif;
-  --font-mono: 'IBM Plex Mono', monospace;
-  font-family: var(--font-body);
-  line-height: 1.5;
-  font-weight: 400;
+  --bg: #f4f6f8;
+  --panel: #eef2f6;
+  --card: #fbfcfd;
+  --surface: #ffffff;
+  --soft: #f2f5f8;
+  --selected: #edf4ff;
+  --ink: #162033;
+  --muted: #657288;
+  --accent: #224c8f;
+  --accent-soft: #53a36c;
+  --line-strong: rgba(22, 32, 51, 0.22);
+  --border: rgba(22, 32, 51, 0.11);
+  font-family: 'Manrope', sans-serif;
+  line-height: 1.45;
+  font-weight: 500;
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(193, 105, 57, 0.16), transparent 28%),
-    linear-gradient(180deg, #f7eee1 0%, #f3eadf 100%);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -30,76 +28,54 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(16, 23, 34, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(16, 23, 34, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 90%);
-}
-
-a {
-  color: inherit;
+  background:
+    radial-gradient(circle at top left, rgba(34, 76, 143, 0.06), transparent 22%),
+    linear-gradient(180deg, #f8fafc 0%, #f4f6f8 100%);
 }
 
 button,
 input,
-textarea,
-select {
+select,
+textarea {
   font: inherit;
-}
-
-code {
-  font-family: var(--font-mono);
 }
 
 h1,
 h2,
 h3,
-h4,
 strong {
   margin: 0;
-  font-family: var(--font-display);
-  font-weight: 700;
   color: var(--ink);
 }
 
 h1 {
-  max-width: 12ch;
-  font-size: clamp(3rem, 7vw, 6.2rem);
-  line-height: 0.9;
-  letter-spacing: -0.05em;
+  font-size: 1.5rem;
+  line-height: 1.1;
 }
 
 h2 {
-  font-size: clamp(1.8rem, 4vw, 3rem);
-  line-height: 0.96;
-  letter-spacing: -0.04em;
+  font-size: 1.7rem;
+  line-height: 1.1;
 }
 
 h3 {
-  font-size: 1.15rem;
+  font-size: 1rem;
+  line-height: 1.2;
 }
 
 p {
   margin: 0;
 }
 
+code,
+pre {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
 #root {
-  width: min(1440px, 100%);
-  margin: 0 auto;
+  width: 100%;
 }
