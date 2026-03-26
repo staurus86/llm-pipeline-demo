@@ -1,90 +1,44 @@
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
 
-:root {
-  --bg: #edf1f5;
-  --panel: #111827;
-  --panel-2: #172133;
-  --card: #f8fafc;
-  --surface: #ffffff;
-  --soft: #f1f5f9;
-  --soft-2: #e6edf5;
-  --selected: #e8f0fe;
-  --ink: #0f172a;
-  --muted: #5f6f85;
-  --accent: #1d4ed8;
-  --accent-soft: #0f9d58;
-  --line-strong: rgba(15, 23, 42, 0.18);
-  --border: rgba(15, 23, 42, 0.08);
-  --border-dark: rgba(255, 255, 255, 0.1);
-  --sidebar-text: #d6deea;
-  --sidebar-muted: #93a1b5;
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
-  font-family: 'Sora', sans-serif;
-  line-height: 1.45;
-  font-weight: 500;
-  color: var(--ink);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --font-sans: "Sora", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --color-app-bg: #f1f5f9;
+  --color-app-panel: #ffffff;
+  --color-app-panel-soft: #f8fafc;
+  --color-app-border: #e2e8f0;
+  --color-app-text: #0f172a;
+  --color-app-muted: #64748b;
+  --color-app-brand: #4f46e5;
+  --color-app-brand-soft: #e0e7ff;
+  --color-app-brand-dark: #312e81;
+  --color-app-success: #16a34a;
+  --color-app-warning: #d97706;
+  --color-app-danger: #dc2626;
+  --color-app-sidebar: #111827;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    @apply box-border;
+  }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background: var(--bg);
-}
+  body {
+    @apply m-0 min-h-screen min-w-80 bg-app-bg font-sans text-app-text antialiased;
+    background-image:
+      radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 24%),
+      linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
 
-h1,
-h2,
-h3,
-strong {
-  margin: 0;
-  color: var(--ink);
-}
-
-h1 {
-  font-size: 1.55rem;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-
-h2 {
-  font-size: 1.75rem;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-}
-
-h3 {
-  font-size: 1rem;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-p {
-  margin: 0;
-}
-
-code,
-pre {
-  font-family: 'IBM Plex Mono', monospace;
-}
-
-#root {
-  width: 100%;
+  #root {
+    @apply w-full;
+  }
 }
