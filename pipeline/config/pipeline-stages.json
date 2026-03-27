@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "pipeline_name": "llm-pipeline-demo",
+  "stages": [
+    {
+      "id": "import",
+      "label": "Import Raw Queries",
+      "input": "data/demo-raw-queries.json",
+      "output": "queryRows",
+      "module": "pipeline/lib/import-raw-queries.mjs"
+    },
+    {
+      "id": "preprocess",
+      "label": "Preprocess And Normalize",
+      "input": "queryRows",
+      "output": "normalized query rows",
+      "module": "pipeline/lib/preprocess.mjs"
+    },
+    {
+      "id": "semantic_parse",
+      "label": "Semantic Parse And Intent Classification",
+      "input": "normalized query rows",
+      "output": "parseRows",
+      "module": "pipeline/lib/semantic-parse.mjs"
+    },
+    {
+      "id": "cluster",
+      "label": "Cluster And Page Type",
+      "input": "parse-ready query rows",
+      "output": "clusterRows + siteNodes",
+      "module": "pipeline/lib/cluster-and-page-type.mjs"
+    },
+    {
+      "id": "url_match",
+      "label": "URL Matching",
+      "input": "clusterRows",
+      "output": "urlMatches",
+      "module": "pipeline/lib/url-match.mjs"
+    },
+    {
+      "id": "conflict_detection",
+      "label": "Conflict Detection",
+      "input": "queryRows + clusterRows",
+      "output": "reviewRows + topConflicts",
+      "module": "pipeline/lib/conflict-detection.mjs"
+    },
+    {
+      "id": "brief_generation",
+      "label": "Content Brief Generation",
+      "input": "clusterRows",
+      "output": "briefRows",
+      "module": "pipeline/lib/brief-generator.mjs"
+    }
+  ]
+}
+

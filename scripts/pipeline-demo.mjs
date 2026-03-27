@@ -1,5 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { importRawQueries } from '../pipeline/lib/import-raw-queries.mjs'
+import { buildQueryRows } from '../pipeline/lib/preprocess.mjs'
+import { parseSemanticRows } from '../pipeline/lib/semantic-parse.mjs'
+import { buildClusterRows, buildSiteNodes, getCluster } from '../pipeline/lib/cluster-and-page-type.mjs'
+import { buildUrlMatches } from '../pipeline/lib/url-match.mjs'
+import { buildReviewRows, buildTopConflicts } from '../pipeline/lib/conflict-detection.mjs'
+import { buildBriefRows } from '../pipeline/lib/brief-generator.mjs'
 
 const root = process.cwd()
 const envPath = path.join(root, '.env')
@@ -24,219 +31,22 @@ function readEnvFile(filePath) {
   )
 }
 
-function normalizeQuery(query) {
-  return query
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .replace(/2026/g, '')
-    .replace(/sale/g, 'скидки')
-    .trim()
-}
-
-function classify(raw) {
-  const query = normalizeQuery(raw.query)
-
-  if (/(скачать|ремонт|wildberries)/.test(query)) {
-    return { flag: 'garbage', flagTone: 'danger', status: 'rejected', statusTone: 'danger', intent: 'mixed' }
-  }
-  if (/(как |таблица размеров|отзывы|стирать)/.test(query)) {
-    return { flag: 'support intent', flagTone: 'warning', status: 'review', statusTone: 'warning', intent: 'informational' }
-  }
-  if (/(лучшие|или|vs)/.test(query)) {
-    return { flag: 'review', flagTone: 'warning', status: 'clustered', statusTone: 'success', intent: 'comparison' }
-  }
-  if (/(москва|спб|санкт|казань)/.test(query)) {
-    return { flag: 'geo review', flagTone: 'warning', status: 'parsed', statusTone: 'neutral', intent: 'local' }
-  }
-  if (/(hoka|pegasus|gel kayano|adizero|novablast)/.test(query)) {
-    return { flag: 'model intent', flagTone: 'warning', status: 'review', statusTone: 'warning', intent: 'commercial' }
-  }
-
-  return { flag: 'clean', flagTone: 'success', status: 'clustered', statusTone: 'success', intent: 'commercial' }
-}
-
-function getCluster(raw) {
-  const query = normalizeQuery(raw.query)
-  if (/асфальт|road/.test(query) && /женск/.test(query)) return ['women-road-running-shoes', 'Женские беговые кроссовки для асфальта', 'filter-page']
-  if (/асфальт|road/.test(query)) return ['road-running-shoes', 'Беговые кроссовки для асфальта', 'filter-page']
-  if (/марафон|полумарафон/.test(query)) return ['marathon-running-shoes', 'Лучшие кроссовки для марафона', 'guide-page']
-  if (/adidas.*nike|nike.*adidas|vs/.test(query)) return ['brand-comparison-running', 'Adidas или Nike для бега', 'comparison-page']
-  if (/spb|санкт|казань|москва/.test(query)) return ['geo-running-shoes', 'Беговые кроссовки по городам', 'geo-page']
-  if (/nike/.test(query)) return ['nike-running-shoes', 'Беговые кроссовки Nike', 'brand-page']
-  if (/asics|gel kayano/.test(query)) return ['asics-running-shoes', 'Беговые кроссовки ASICS', 'brand-page']
-  if (/salomon|трейл/.test(query)) return ['trail-running-shoes', 'Кроссовки для трейлраннинга', 'filter-page']
-  if (/плоскостоп/.test(query)) return ['support-running-shoes', 'Беговые кроссовки для плоскостопия', 'guide-page']
-  return ['general-running-shoes', 'Беговые кроссовки', 'category']
-}
-
-function getEntity(query) {
-  if (/gel kayano/.test(query)) return ['asics gel kayano', 'product_model_family']
-  if (/pegasus/.test(query)) return ['nike pegasus', 'product_model_family']
-  if (/hoka clifton/.test(query)) return ['hoka clifton', 'product_model']
-  if (/adidas/.test(query) && /nike/.test(query)) return ['adidas vs nike', 'brand_comparison']
-  if (/nike/.test(query)) return ['nike', 'brand']
-  if (/asics/.test(query)) return ['asics', 'brand']
-  if (/salomon/.test(query)) return ['salomon', 'brand']
-  return ['беговые кроссовки', 'product_category']
-}
-
-function slugify(label) {
-  return label
-    .toLowerCase()
-    .replace(/[^a-zа-я0-9\s-]/gi, '')
-    .replace(/\s+/g, '-')
-}
-
-function uniqueBy(items, key) {
-  return [...new Map(items.map((item) => [item[key], item])).values()]
-}
-
 const env = { ...readEnvFile(envPath), ...process.env }
 if (!env.OPENAI_API_KEY && !env.CEREBRAS_API_KEY) {
   console.error('Нужен OPENAI_API_KEY или CEREBRAS_API_KEY в .env для запуска demo pipeline.')
   process.exit(1)
 }
 
-const rawItems = JSON.parse(fs.readFileSync(rawPath, 'utf8'))
+const rawItems = importRawQueries(rawPath)
 const generatedAt = new Date().toISOString()
 
-const queryRows = rawItems.map((item) => {
-  const normalized = normalizeQuery(item.query)
-  const cls = classify(item)
-  return {
-    query: item.query,
-    normalized,
-    source: item.source,
-    frequency: String(item.frequency),
-    geo: item.geo,
-    ...cls,
-  }
-})
-
-const parsedRows = queryRows
-  .filter((row) => row.status !== 'rejected')
-  .map((row) => {
-    const [entity, entityType] = getEntity(row.normalized)
-    const [clusterId] = getCluster({ query: row.normalized })
-    const review =
-      row.flag === 'clean'
-        ? 'auto-ok'
-        : row.flag === 'geo review'
-          ? 'check geo'
-          : row.flag === 'support intent'
-            ? 'support content'
-            : row.flag === 'model intent'
-              ? 'model review'
-              : 'comparison check'
-
-    return {
-      query: row.query,
-      entity,
-      entityType,
-      attributes: clusterId.replace(/-/g, ','),
-      geo: row.geo === 'RU' ? 'none' : row.geo,
-      intent: row.intent,
-      confidence: row.flag === 'clean' ? '0.94' : row.flag === 'model intent' ? '0.87' : '0.83',
-      review,
-      reviewTone: row.flag === 'clean' ? 'success' : 'warning',
-    }
-  })
-
-const clustersMap = new Map()
-for (const row of queryRows.filter((item) => item.status !== 'rejected')) {
-  const [id, h1, pageType] = getCluster({ query: row.normalized })
-  const current = clustersMap.get(id) ?? {
-    id,
-    label: id,
-    entity: getEntity(row.normalized)[0],
-    intent: row.intent,
-    intentTone: row.intent === 'commercial' ? 'success' : row.intent === 'comparison' ? 'warning' : 'neutral',
-    frequency: 0,
-    status: row.flag === 'clean' ? 'approved' : 'needs_review',
-    statusTone: row.flag === 'clean' ? 'success' : 'warning',
-    pageType,
-    h1,
-    slug: `/${slugify(id)}/`,
-    matchedUrl: pageType === 'comparison-page' ? 'none' : `/catalog/${slugify(id)}/`,
-    queries: [],
-  }
-  current.frequency += Number(row.frequency)
-  current.queries.push(row.query)
-  clustersMap.set(id, current)
-}
-
-const clusterRows = [...clustersMap.values()]
-  .map((item) => ({
-    ...item,
-    frequency: item.frequency.toLocaleString('en-US'),
-    queries: item.queries.join(', '),
-  }))
-  .sort((a, b) => Number.parseInt(b.frequency.replace(/,/g, ''), 10) - Number.parseInt(a.frequency.replace(/,/g, ''), 10))
-
-const siteNodes = clusterRows.slice(0, 8).map((cluster, index) => ({
-  id: cluster.id,
-  label: cluster.h1,
-  url: cluster.slug,
-  pageType: cluster.pageType,
-  tone: cluster.statusTone,
-  level: cluster.pageType === 'filter-page' ? 1 : 0,
-  parent: cluster.pageType === 'filter-page' ? '/running-shoes/' : 'root',
-  cluster: cluster.label,
-  origin: cluster.matchedUrl === 'none' ? 'new' : 'matched existing',
-  aiNote: `Кластер ${cluster.label} собран из демо-датасета и требует ${cluster.status === 'approved' ? 'минимальной' : 'дополнительной'} проверки.`,
-}))
-
-const urlMatches = clusterRows.slice(0, 8).map((cluster) => ({
-  cluster: cluster.label,
-  slug: cluster.slug,
-  url: cluster.matchedUrl,
-  type: cluster.matchedUrl === 'none' ? 'new page candidate' : 'semantic match',
-  confidence: cluster.status === 'approved' ? '0.92' : '0.74',
-  action: cluster.matchedUrl === 'none' ? 'create new' : cluster.status === 'approved' ? 'merge existing' : 'review merge',
-  tone: cluster.matchedUrl === 'none' ? 'neutral' : cluster.status === 'approved' ? 'success' : 'warning',
-}))
-
-const reviewRows = uniqueBy(
-  [
-    ...queryRows
-      .filter((row) => row.flagTone === 'warning')
-      .slice(0, 4)
-      .map((row) => ({
-        item: row.query,
-        type: 'query',
-        issue: `Флаг: ${row.flag}`,
-        severity: row.intent === 'comparison' ? 'high' : 'medium',
-        severityTone: row.intent === 'comparison' ? 'danger' : 'warning',
-        assigned: row.intent === 'comparison' ? 'Nina' : 'Ira',
-        status: 'open',
-        statusTone: 'danger',
-      })),
-    ...clusterRows
-      .filter((cluster) => cluster.status !== 'approved')
-      .slice(0, 4)
-      .map((cluster) => ({
-        item: cluster.label,
-        type: 'cluster',
-        issue: `Нужно уточнить ${cluster.pageType}`,
-        severity: 'medium',
-        severityTone: 'warning',
-        assigned: 'Max',
-        status: 'in_review',
-        statusTone: 'warning',
-      })),
-  ],
-  'item',
-)
-
-const briefRows = clusterRows.slice(0, 8).map((cluster, index) => ({
-  page: cluster.h1,
-  pageType: cluster.pageType,
-  intent: cluster.intent,
-  cluster: cluster.label,
-  status: cluster.status === 'approved' ? 'brief_ready' : index % 2 === 0 ? 'awaiting_approval' : 'in_review',
-  tone: cluster.status === 'approved' ? 'success' : 'warning',
-  owner: cluster.pageType === 'guide-page' ? 'Editorial team' : 'SEO team',
-}))
+const queryRows = buildQueryRows(rawItems)
+const parsedRows = parseSemanticRows(queryRows, getCluster)
+const clusterRows = buildClusterRows(queryRows)
+const siteNodes = buildSiteNodes(clusterRows)
+const urlMatches = buildUrlMatches(clusterRows)
+const reviewRows = buildReviewRows(queryRows, clusterRows)
+const briefRows = buildBriefRows(clusterRows)
 
 const batchRows = [
   {
@@ -326,13 +136,7 @@ const pageTypeRows = Object.entries(pageTypeCounts).map(([pageType, count]) => (
   note: `Автоматически вычислено по локальному прогону (${pageType}).`,
 }))
 
-const topConflicts = reviewRows.slice(0, 3).map((item) => ({
-  cluster: item.item,
-  reason: item.issue,
-  severity: item.severity,
-  severityTone: item.severityTone,
-  owner: item.assigned,
-}))
+const topConflicts = buildTopConflicts(reviewRows)
 
 const promptRows = [
   {

@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "description": "Demo entity and pipeline output schema for future real pipeline implementation.",
+  "entity_types": [
+    "product_category",
+    "brand",
+    "product_model",
+    "product_model_family",
+    "brand_comparison"
+  ],
+  "intents": [
+    "commercial",
+    "informational",
+    "comparison",
+    "local",
+    "mixed"
+  ],
+  "page_types": [
+    "category",
+    "brand-page",
+    "filter-page",
+    "guide-page",
+    "comparison-page",
+    "geo-page",
+    "no-page-needed"
+  ],
+  "query_output": {
+    "query": "string",
+    "normalized": "string",
+    "source": "string",
+    "frequency": "string",
+    "geo": "string",
+    "flag": "string",
+    "status": "string",
+    "intent": "string"
+  },
+  "semantic_parse_output": {
+    "entity": "string",
+    "entityType": "entity_types",
+    "attributes": "string",
+    "geo": "string | none",
+    "intent": "intents",
+    "confidence": "string",
+    "review": "string"
+  },
+  "cluster_output": {
+    "id": "string",
+    "label": "string",
+    "entity": "string",
+    "intent": "intents",
+    "pageType": "page_types",
+    "h1": "string",
+    "slug": "string",
+    "matchedUrl": "string | none"
+  },
+  "brief_output": {
+    "page": "string",
+    "pageType": "page_types",
+    "intent": "intents",
+    "cluster": "string",
+    "status": "string",
+    "owner": "string"
+  }
+}
+

@@ -25,6 +25,9 @@
 - `src/App.tsx` — основной интерфейс демо-консоли
 - `src/data.ts` — встроенный набор демонстрационных данных
 - `scripts/pipeline-demo.mjs` — локальный генератор runtime-данных из demo dataset
+- `pipeline/lib/*` — микро-модули стадий пайплайна, которые можно развивать в реальный pipeline
+- `pipeline/prompts/*` — шаблоны промптов для нормализации, intent classification и page typing
+- `pipeline/config/*` — схема сущностей и machine-readable описание этапов пайплайна
 - `data/demo-raw-queries.json` — исходный набор демо-запросов
 - `public/demo-run.json` — runtime-результат после `npm run pipeline:demo`
 - `railway.json` — конфигурация деплоя на Railway
