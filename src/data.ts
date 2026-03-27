@@ -10,6 +10,10 @@ export const navItems = [
   { id: 'settings', short: '09', label: 'Настройки и ключи', description: 'Демо-настройки проекта, API-ключи и место хранения конфигурации.' },
   { id: 'review', short: '10', label: 'Очередь проверки', description: 'Human-in-the-loop для спорных или рискованных кейсов.' },
   { id: 'briefs', short: '11', label: 'Контент-брифы', description: 'Финальные брифы для редакции и SEO-команды.' },
+  { id: 'pipelineModules', short: '12', label: 'Модули пайплайна', description: 'Отдельные demo-модули, из которых можно растить реальный pipeline.' },
+  { id: 'promptAssets', short: '13', label: 'Prompt Assets', description: 'Файлы prompt templates, вынесенные из UI в отдельные артефакты.' },
+  { id: 'schemas', short: '14', label: 'Схемы и контракты', description: 'Entity schema и описание этапов пайплайна в machine-readable виде.' },
+  { id: 'examples', short: '15', label: 'Примеры артефактов', description: 'Примеры входов и выходов по стадиям pipeline.' },
 ]
 
 export const pipelineSummary = [

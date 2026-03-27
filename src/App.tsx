@@ -123,6 +123,143 @@ const localRunCommands = [
   'npm run dev',
 ]
 
+const pipelineModuleRows = [
+  {
+    file: 'pipeline/lib/import-raw-queries.mjs',
+    stage: 'Import',
+    purpose: 'Читает demo raw dataset и отдаёт массив запросов.',
+    future: 'Может быть заменён ingestion service для CSV, GSC, API и queues.',
+  },
+  {
+    file: 'pipeline/lib/preprocess.mjs',
+    stage: 'Preprocess',
+    purpose: 'Нормализация query и первичная rule-based классификация.',
+    future: 'Можно вынести в отдельный preprocessing layer с versioned rules.',
+  },
+  {
+    file: 'pipeline/lib/semantic-parse.mjs',
+    stage: 'Semantic Parse',
+    purpose: 'Формирует сущности, типы сущностей, атрибуты, intent и review.',
+    future: 'Точка замены rule-based логики на реальный LLM adapter.',
+  },
+  {
+    file: 'pipeline/lib/cluster-and-page-type.mjs',
+    stage: 'Cluster & Page Type',
+    purpose: 'Строит cluster rows, slug, H1, page type и site nodes.',
+    future: 'Может стать отдельным clustering/page-decision service.',
+  },
+  {
+    file: 'pipeline/lib/url-match.mjs',
+    stage: 'URL Match',
+    purpose: 'Сопоставляет кластеры с URL и формирует action/confidence.',
+    future: 'Подходит под real matcher с каталогом, synonym maps и URL index.',
+  },
+  {
+    file: 'pipeline/lib/conflict-detection.mjs',
+    stage: 'Conflict Detection',
+    purpose: 'Собирает review rows и top conflicts для analyst queue.',
+    future: 'Можно расширить до полноценного rules engine и triage layer.',
+  },
+  {
+    file: 'pipeline/lib/brief-generator.mjs',
+    stage: 'Brief Generation',
+    purpose: 'Генерирует content brief rows из cluster output.',
+    future: 'Может стать входом в editorial workflow и CMS integration.',
+  },
+] as const
+
+const promptAssetRows = [
+  {
+    file: 'pipeline/prompts/normalize-query.md',
+    stage: 'Preprocessing Layer',
+    objective: 'Канонизация raw query и отбраковка мусора.',
+  },
+  {
+    file: 'pipeline/prompts/classify-intent.md',
+    stage: 'Intent Classification',
+    objective: 'Определение dominant intent и причины manual review.',
+  },
+  {
+    file: 'pipeline/prompts/decide-page-type.md',
+    stage: 'Page Typing Layer',
+    objective: 'Выбор page type, H1 и slug candidate для validated cluster.',
+  },
+] as const
+
+const schemaAssetRows = [
+  {
+    file: 'pipeline/config/entity-schema.json',
+    type: 'Entity Contract',
+    note: 'Содержит entity types, intents, page types и shape выходных артефактов.',
+  },
+  {
+    file: 'pipeline/config/pipeline-stages.json',
+    type: 'Stage Registry',
+    note: 'Описывает стадии, входы, выходы и модуль, который за них отвечает.',
+  },
+] as const
+
+const exampleAssetRows = [
+  {
+    file: 'pipeline/examples/raw-query-example.json',
+    kind: 'Input',
+    note: 'Пример одной сырой поисковой строки на вход pipeline.',
+  },
+  {
+    file: 'pipeline/examples/semantic-parse-example.json',
+    kind: 'Semantic Output',
+    note: 'Пример parse/intention output после semantic layer.',
+  },
+  {
+    file: 'pipeline/examples/cluster-example.json',
+    kind: 'Cluster Output',
+    note: 'Пример cluster + page type + slug candidate.',
+  },
+  {
+    file: 'pipeline/examples/brief-example.json',
+    kind: 'Brief Output',
+    note: 'Пример артефакта для редакции/SEO ownership.',
+  },
+] as const
+
+const entitySchemaSnippet = `{
+  "entity_types": [
+    "product_category",
+    "brand",
+    "product_model",
+    "product_model_family",
+    "brand_comparison"
+  ],
+  "intents": [
+    "commercial",
+    "informational",
+    "comparison",
+    "local",
+    "mixed"
+  ],
+  "page_types": [
+    "category",
+    "brand-page",
+    "filter-page",
+    "guide-page",
+    "comparison-page",
+    "geo-page",
+    "no-page-needed"
+  ]
+}`
+
+const pipelineStagesSnippet = `{
+  "stages": [
+    { "id": "import", "module": "pipeline/lib/import-raw-queries.mjs" },
+    { "id": "preprocess", "module": "pipeline/lib/preprocess.mjs" },
+    { "id": "semantic_parse", "module": "pipeline/lib/semantic-parse.mjs" },
+    { "id": "cluster", "module": "pipeline/lib/cluster-and-page-type.mjs" },
+    { "id": "url_match", "module": "pipeline/lib/url-match.mjs" },
+    { "id": "conflict_detection", "module": "pipeline/lib/conflict-detection.mjs" },
+    { "id": "brief_generation", "module": "pipeline/lib/brief-generator.mjs" }
+  ]
+}`
+
 function ToneFlagIcon({ tone }: { tone: string }) {
   if (tone === 'danger' || tone === 'risk') {
     return <ShieldAlert size={12} strokeWidth={2.2} />
@@ -228,6 +365,18 @@ const promptStageLabels: Record<string, string> = {
 
 function humanize(value: string, dictionary: Record<string, string>) {
   return dictionary[value] ?? value
+}
+
+function getPageTypeBadge(label: string) {
+  const lower = label.toLowerCase()
+
+  if (lower.includes('гайд')) return 'контент'
+  if (lower.includes('бренд')) return 'бренд'
+  if (lower.includes('гео')) return 'гео'
+  if (lower.includes('сравн')) return 'сравнение'
+  if (lower.includes('фильтр')) return 'фильтр'
+
+  return 'категория'
 }
 
 function App() {
@@ -918,15 +1067,7 @@ function App() {
                         <div className="row-flags">
                           <span className="inline-flag neutral">
                             <Briefcase size={12} strokeWidth={2.2} />
-                            {row.label.includes('Guide')
-                              ? 'контент'
-                              : row.label.includes('Brand')
-                                ? 'бренд'
-                                : row.label.includes('Geo')
-                                  ? 'гео'
-                                  : row.label.includes('Comparison')
-                                    ? 'сравнение'
-                                    : 'категория'}
+                            {getPageTypeBadge(row.label)}
                           </span>
                         </div>
                         <strong>{row.label}</strong>
@@ -1677,6 +1818,190 @@ function App() {
                   <span>{row.owner}</span>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {activeScreen === 'pipelineModules' && (
+          <section className="two-column-screen">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Pipeline Modules</p>
+                  <h3>Модульная раскладка demo pipeline</h3>
+                </div>
+                <div className="toolbar">
+                  <span className="chip neutral">7 stage modules</span>
+                  <span className="chip success">готово к эволюции</span>
+                </div>
+              </div>
+              <div className="grid-table">
+                <div className="grid-head four">
+                  <span>Файл</span>
+                  <span>Стадия</span>
+                  <span>Что делает</span>
+                  <span>Куда развивать</span>
+                </div>
+                {pipelineModuleRows.map((row) => (
+                  <div key={row.file} className="grid-line four">
+                    <span>{row.file}</span>
+                    <span>{row.stage}</span>
+                    <span>{row.purpose}</span>
+                    <span>{row.future}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Execution Path</p>
+                  <h3>Как это связано с демо сейчас</h3>
+                </div>
+              </div>
+              <div className="detail-card">
+                <strong>Текущий orchestration path</strong>
+                <p>
+                  Скрипт `scripts/pipeline-demo.mjs` уже использует эти модули и собирает
+                  из них runtime bundle для интерфейса. Это означает, что структура не
+                  декоративная, а уже включена в фактический demo run.
+                </p>
+              </div>
+              <pre className="json-card">{pipelineStagesSnippet}</pre>
+            </div>
+          </section>
+        )}
+
+        {activeScreen === 'promptAssets' && (
+          <section className="two-column-screen">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Prompt Assets</p>
+                  <h3>Файлы prompt templates</h3>
+                </div>
+              </div>
+              <div className="grid-table">
+                <div className="grid-head three">
+                  <span>Файл</span>
+                  <span>Этап</span>
+                  <span>Назначение</span>
+                </div>
+                {promptAssetRows.map((row) => (
+                  <div key={row.file} className="grid-line three">
+                    <span>{row.file}</span>
+                    <span>{row.stage}</span>
+                    <span>{row.objective}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Prompt Direction</p>
+                  <h3>Зачем это вынесено из UI</h3>
+                </div>
+              </div>
+              <div className="detail-card">
+                <strong>Отдельные prompt files</strong>
+                <p>
+                  Промпты теперь лежат не только как строки в демо-таблице, но и как
+                  отдельные assets в репозитории. Это даёт основу для versioning,
+                  prompt registry и реального prompt pack в будущем.
+                </p>
+              </div>
+              <pre className="json-card">{selectedPrompt.schema}</pre>
+            </div>
+          </section>
+        )}
+
+        {activeScreen === 'schemas' && (
+          <section className="two-column-screen">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Schemas</p>
+                  <h3>Схемы сущностей и стадий</h3>
+                </div>
+              </div>
+              <div className="grid-table">
+                <div className="grid-head three">
+                  <span>Файл</span>
+                  <span>Тип</span>
+                  <span>Описание</span>
+                </div>
+                {schemaAssetRows.map((row) => (
+                  <div key={row.file} className="grid-line three">
+                    <span>{row.file}</span>
+                    <span>{row.type}</span>
+                    <span>{row.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Entity Schema</p>
+                  <h3>Минимальный machine-readable contract</h3>
+                </div>
+              </div>
+              <pre className="json-card">{entitySchemaSnippet}</pre>
+              <div className="detail-card">
+                <strong>Почему это важно</strong>
+                <p>
+                  Для реального pipeline schema и stage registry нужны отдельно от UI:
+                  их можно использовать в backend, валидаторах, orchestrator и тестах.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeScreen === 'examples' && (
+          <section className="two-column-screen">
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Examples</p>
+                  <h3>Примеры входов и выходов</h3>
+                </div>
+              </div>
+              <div className="grid-table">
+                <div className="grid-head three">
+                  <span>Файл</span>
+                  <span>Тип</span>
+                  <span>Описание</span>
+                </div>
+                {exampleAssetRows.map((row) => (
+                  <div key={row.file} className="grid-line three">
+                    <span>{row.file}</span>
+                    <span>{row.kind}</span>
+                    <span>{row.note}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <div>
+                  <p className="eyebrow">Examples Flow</p>
+                  <h3>Что можно проверить глазами</h3>
+                </div>
+              </div>
+              <div className="detail-card">
+                <strong>Артефакты по стадиям</strong>
+                <p>
+                  Эти examples лежат в `pipeline/examples/*` и показывают, как одна сырая
+                  query превращается в semantic output, cluster output и brief artifact.
+                </p>
+              </div>
+              <pre className="json-card">{`raw query -> semantic parse -> cluster -> content brief`}</pre>
             </div>
           </section>
         )}
