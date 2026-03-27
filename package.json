@@ -7,6 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "pipeline:demo": "node scripts/pipeline-demo.mjs",
+    "py:validate-data": "python python-tools/validate_demo_data.py",
+    "py:export-csv": "python python-tools/export_demo_data_csv.py",
+    "py:summarize-demo": "python python-tools/summarize_demo_run.py",
     "start": "serve -s dist -l $PORT",
     "lint": "eslint .",
     "preview": "vite preview"

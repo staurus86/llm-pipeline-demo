@@ -108,7 +108,26 @@ npm run build
 npm run start
 npm run preview
 npm run pipeline:demo
+npm run py:validate-data
+npm run py:export-csv
+npm run py:summarize-demo
 npm run lint
+```
+
+## Python-утилиты
+
+В проект добавлены микро-скрипты на Python без внешних зависимостей:
+
+- `python-tools/validate_demo_data.py` — проверяет структуру `data/demo-raw-queries.json`
+- `python-tools/export_demo_data_csv.py` — экспортирует demo dataset в CSV
+- `python-tools/summarize_demo_run.py` — печатает CLI-сводку по `public/demo-run.json`
+
+Примеры:
+
+```bash
+npm run py:validate-data
+npm run py:export-csv
+npm run py:summarize-demo
 ```
 
 ## Production и Railway
