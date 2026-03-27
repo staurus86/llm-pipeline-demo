@@ -1,0 +1,9 @@
+{
+  "page": "Беговые кроссовки по городам",
+  "pageType": "geo-page",
+  "intent": "local",
+  "cluster": "geo-running-shoes",
+  "status": "awaiting_approval",
+  "owner": "SEO team"
+}
+

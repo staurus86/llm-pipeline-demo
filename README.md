@@ -176,6 +176,7 @@ Railway использует:
 - [Обзор пайплайна](./docs/PIPELINE.md)
 - [Запуск и деплой](./docs/DEPLOYMENT.md)
 - [Contributing](./CONTRIBUTING.md)
+- [Pipeline Module](./pipeline/README.md)
 
 ## Автор
 

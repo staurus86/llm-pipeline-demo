@@ -1,0 +1,12 @@
+{
+  "query": "купить беговые кроссовки nike москва",
+  "normalized": "купить беговые кроссовки nike москва",
+  "entity": "nike",
+  "entityType": "brand",
+  "attributes": "geo-running-shoes",
+  "geo": "Moscow",
+  "intent": "local",
+  "confidence": "0.83",
+  "review": "check geo"
+}
+

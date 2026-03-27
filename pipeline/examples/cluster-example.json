@@ -1,0 +1,11 @@
+{
+  "id": "geo-running-shoes",
+  "label": "geo-running-shoes",
+  "entity": "nike",
+  "intent": "local",
+  "pageType": "geo-page",
+  "h1": "Беговые кроссовки по городам",
+  "slug": "/geo-running-shoes/",
+  "matchedUrl": "/catalog/geo-running-shoes/"
+}
+
